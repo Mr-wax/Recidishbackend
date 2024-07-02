@@ -60,7 +60,7 @@ export const signUp = async (req, res) => {
     export const signIn = async (req, res) => {
         const loginResults = signInValidator.safeParse(req.body)
         if(!loginResults) {
-            return res.status(400).json(formatZodErrror(loginResults.error.issues))
+            return res.status(400).json(formatZodError(loginResults.error.issues))
         } try {
             const {email, password} = req.body
             const user = await User.findOne({email})

@@ -11,7 +11,7 @@ export const getallUsers = async (req, res) => {
 } catch (error) {
     console.error('Error while getting all users:', error);
     res.status(500).json({message: error.message})
-}}
+}};
 
 export const getSingleUser = async (req, res) => {
     try { 
@@ -26,7 +26,7 @@ export const getSingleUser = async (req, res) => {
         console.error('Error while getting single user', error);
         res.status(500).json({message: error.message})
     }
-}
+};
 
 export const deleteSingleUser = async (req, res) => {
     try { 
@@ -40,7 +40,20 @@ export const deleteSingleUser = async (req, res) => {
     } catch (error) {
         console.error('Error while deleting user:', error);
         res.status(500).json({message: error.message})
-    }}
+    }};
+
+    export const freezeAccount = async(req, res) => {
+        try {
+            const user = await User.findById(req.user._id)
+            if (!user) {
+                res.status(401).json({message: "You are unauthorized to freeze this account"})
+            }
+            user.isFrozen = true
+            await user.save()
+        } catch (error) {
+            res.status(500).json({message:error})
+        }
+    };
 
     export const deleteAllUsers = async (req, res) => {
         try {
@@ -53,7 +66,33 @@ export const deleteSingleUser = async (req, res) => {
     } catch (error) {
         console.error('Error while deleting all users:', error);
         res.status(500).json({message: error.message})
-    }}
+    }};
+    export const getSuggestedUsers = async (req, res) => {
+        try {
+            const userId = req.user._id;
+    
+            const usersFollowedByYou = await User.findById(userId).select("following");
+    
+            const users = await User.aggregate([
+                {
+                    $match: {
+                        _id: { $ne: userId },
+                    },
+                },
+                {
+                    $sample: { size: 10 },
+                },
+            ]);
+            const filteredUsers = users.filter((user) => !usersFollowedByYou.following.includes(user._id));
+            const suggestedUsers = filteredUsers.slice(0, 4);
+    
+            suggestedUsers.forEach((user) => (user.password = null));
+    
+            res.status(200).json(suggestedUsers);
+        } catch (error) {
+            res.status(500).json({ error: error.message });
+        }
+    };
 
     export const updateUser = async (req, res) => {
         try {
@@ -80,3 +119,4 @@ export const deleteSingleUser = async (req, res) => {
         console.error('Error while updating user:', error);
         res.status(500).json({message: error.message});
     }};
+
