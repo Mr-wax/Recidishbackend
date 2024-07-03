@@ -37,7 +37,7 @@ export const signUp = async (req, res) => {
 
             if (password!== confirmPassword) {
                 return res.status(400).json({message:'Passwords do not match'})
-            }
+            };
             const encryption = hashValue(password)
             const newUser = new User({
                 name,
@@ -56,7 +56,7 @@ export const signUp = async (req, res) => {
             res.status(500).json({message:error.message})
             console.log('INTERNAL SERVER ERROR', error.message)
         }
-    }
+    };
     export const signIn = async (req, res) => {
         const loginResults = signInValidator.safeParse(req.body)
         if(!loginResults) {
@@ -70,7 +70,7 @@ export const signUp = async (req, res) => {
             const comparePass = comparePasswords(password,user.password)
             if (!comparePasswords){
                 return res.status(400).json({message:'Incorrect password'})
-            }
+            };
         
             const accesstoken = generateTokenAndSetCookie(user._id, res)
             res.status(200).json({message:'User logged in successfully', accesstoken})

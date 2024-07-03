@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const productSchema = new mongoose.Schema({
+const dishesSchema = new mongoose.Schema({
     cook: {
         type: Schema.Types.ObjectId,
         ref: 'User',
@@ -14,8 +14,6 @@ const productSchema = new mongoose.Schema({
         type:String,
         required:true
     },
-
-    
     img:{
         type: String,
         default:""
@@ -32,8 +30,8 @@ const productSchema = new mongoose.Schema({
         type: Number,
         required: true
     },
-    isForSale: {
-        type: Boolean,
+    ingredients: {
+        type: String,
         required: true
     },
     categories:{
