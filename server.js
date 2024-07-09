@@ -13,11 +13,11 @@ const app = express()
 app.use(cors({origin:"*"}))
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({extended:true}))
-app.use('/api/v1', router)
+app.use('/api', router)
 
 const startServer = async () => {
-    const PORT  = process.env.PORT || 3000;
-     await connectDB();
+    const PORT  =  7979;
+     connectDB();
     try {  
     app.listen(PORT, () => {console.log (`RECIDISH APP IS RUNNING ON PORT ${PORT}`);})
     } catch (error) {
