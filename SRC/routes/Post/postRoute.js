@@ -1,10 +1,11 @@
 import express from "express";
+import {upload} from "../../utils/imageUpload.js"
 import { createPost, getAllPosts, getSinglePost, deletePost, likePost, unlikePost, replyToPost} from "../../controllers/PostController.js"
 import protectRoute from "../../middlewares/protectRoute.js"; 
 const router = express.Router()
-// import { signUp, signIn} from "../auth/authRoute.js"
 
-router.post("/add", protectRoute ,createPost)
+
+router.post("/add", protectRoute ,upload.single("img"),createPost)
 router.get("/", protectRoute, getAllPosts)
 router.get("/:id", protectRoute, getSinglePost)
 router.delete("/:id", protectRoute, deletePost)
