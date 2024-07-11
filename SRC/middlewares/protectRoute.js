@@ -27,7 +27,10 @@ const protectRoute = async (req, res, next) => {
 
     console.log("Token received:", token);
 
+    console.log({secret:process.env.JWT_SECRET})
+    
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+  
 
     console.log("Decoded token:", decoded);
 
