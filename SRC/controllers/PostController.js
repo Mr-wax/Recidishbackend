@@ -8,11 +8,13 @@ export const createPost = async (req, res) => {
   try {
     const { text, category } = req.body; // Extract category from request body
     let img;
+    console.log(req.file.path)
 
     if (req.file) {
       const uploadedImg = await cloudinary.uploader.upload(req.file.path);
       img = uploadedImg.secure_url;
     }
+    console.log(img)
 
     const postedBy = req.user._id;
 
