@@ -11,6 +11,11 @@ const postSchema = mongoose.Schema({
     type: String,
     maxlength:1000
   },
+
+  category: {
+     type: String,
+     required: true,
+      enum:["rice", "soup","stew",] }, 
   img:{
     type: String,
     default: ''
@@ -20,6 +25,10 @@ const postSchema = mongoose.Schema({
     ref: "User",
     default: []
   },
+
+  recentSearches: [String],  // Array to store recent search queries
+  interactionHistory: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Post' }], // Array to store interacted posts
+  
   replies: [
     {
       userId: {

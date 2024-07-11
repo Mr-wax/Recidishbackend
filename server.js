@@ -16,7 +16,8 @@ app.use(bodyParser.urlencoded({extended:true}))
 app.use('/api', router)
 
 const startServer = async () => {
-    const PORT  =  7979;
+    const PORT  = 7979;
+    // console.log(PORT)
      connectDB();
     try {  
     app.listen(PORT, () => {console.log (`RECIDISH APP IS RUNNING ON PORT ${PORT}`);})

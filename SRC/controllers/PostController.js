@@ -6,40 +6,41 @@ import { cloudinary } from "../utils/imageUpload.js";
 // Controller for creating a new post with image upload
 export const createPost = async (req, res) => {
   try {
-    const { text } = req.body;
+    const { text, category } = req.body; // Extract category from request body
     let img;
 
-      if (req.file) {
-        const uploadedImg = await cloudinary.uploader.upload(req.file.path);
-        img = uploadedImg.secure_url;
-      }
+    if (req.file) {
+      const uploadedImg = await cloudinary.uploader.upload(req.file.path);
+      img = uploadedImg.secure_url;
+    }
 
-      const postedBy = req.user._id;
+    const postedBy = req.user._id;
 
-      if (!text) {
-        return res.status(400).json({ error: "Text field is required" });
-      }
+    if (!text) {
+      return res.status(400).json({ error: "Text field is required" });
+    }
 
-      const user = await User.findById(postedBy);
-      if (!user) {
-        return res.status(404).json({ error: "User not found" });
-      }
+    const user = await User.findById(postedBy);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
 
-      const maxlength = 1000;
-      if (text.length > maxlength) {
-        return res.status(400).json({ error: `Text should not exceed ${maxlength} characters` });
-      }
+    const maxlength = 1000;
+    if (text.length > maxlength) {
+      return res.status(400).json({ error: `Text should not exceed ${maxlength} characters` });
+    }
 
-      const newPost = new Post({
-        postedBy,
-        img,
-        text
-      });
+    const newPost = new Post({
+      postedBy,
+      img,
+      text,
+      category // Include category in new post creation
+    });
 
-      await newPost.save();
-      res.status(200).json({ message: 'Post created successfully', newPost });
-      console.log('Post created successfully', newPost);
-    
+    await newPost.save();
+    res.status(200).json({ message: 'Post created successfully', newPost });
+    console.log('Post created successfully', newPost);
+
   } catch (error) {
     res.status(500).json({ error: 'Internal server error' });
     console.error('Internal server error:', error);
@@ -160,3 +161,76 @@ export const unlikePost = async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+// Controller to track user searches
+export const trackUserSearch = async (req, res) => {
+  try {
+      const { searchQuery } = req.body;
+      const userId = req.user._id;
+
+      const user = await User.findById(userId);
+      if (!user) {
+          return res.status(404).json({ message: 'User not found' });
+      }
+
+      // Add search query to recent searches
+      user.recentSearches.push(searchQuery);
+      if (user.recentSearches.length > 10) {
+          user.recentSearches.shift();  // Keep only the last 10 searches
+      }
+
+      await user.save();
+
+      res.status(200).json({ message: 'Search query tracked successfully' });
+  } catch (error) {
+      console.error('Error tracking search query:', error);
+      res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// Controller to get suggested posts
+export const getSuggestedPosts = async (req, res) => {
+  try {
+      const userId = req.user._id;
+
+      const user = await User.findById(userId);
+      if (!user) {
+          return res.status(404).json({ message: 'User not found' });
+      }
+
+      const recentSearches = user.recentSearches;
+      const interactionHistory = user.interactionHistory;
+
+      // Find posts based on recent searches and interaction history
+      let suggestedPosts = await Post.find({
+          $or: [
+              { tags: { $in: recentSearches } },
+              { _id: { $in: interactionHistory } }
+          ]
+      }).limit(20);  // Limit to 20 suggested posts
+
+      res.status(200).json({ message: 'Suggested posts found successfully', suggestedPosts });
+  } catch (error) {
+      console.error('Error fetching suggested posts:', error);
+      res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// Controller to get posts by category
+export const getPostsByCategory = async (req, res) => {
+  try {
+    const category  = req.query.category;
+    console.log(category);
+
+    const posts = await Post.find({ category });
+    if (posts.length === 0) {
+      return res.status(404).json({ message: 'No posts found in this category' });
+    }
+
+    res.status(200).json({ message: 'Posts found successfully', posts });
+  } catch (error) {
+    console.error('Error fetching posts by category:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+
