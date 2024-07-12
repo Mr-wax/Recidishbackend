@@ -8,10 +8,10 @@ export const createPost = async (req, res) => {
   try {
     const { text, category } = req.body; // Extract category from request body
     let img;
-    console.log(req.file.path)
+    console.log(req.file)
 
     if (req.file) {
-      const uploadedImg = await cloudinary.uploader.upload(req.file.path);
+      const uploadedImg = await cloudinary.uploader.upload(req.file);
       img = uploadedImg.secure_url;
     }
     console.log(img)
@@ -40,7 +40,7 @@ export const createPost = async (req, res) => {
     });
 
     await newPost.save();
-    res.status(200).json({ message: 'Post created successfully', newPost });
+    res.status(200).json({ message: 'Post created successfully',  newPost });
     console.log('Post created successfully', newPost);
 
   } catch (error) {
@@ -53,7 +53,7 @@ export const createPost = async (req, res) => {
 export const getAllPosts = async (req, res) => {
   try {
     const posts = await Post.find();
-    res.status(200).json({ message: 'Posts found successfully', posts });
+    res.status(200).json({ message: 'Posts found successfully', results: posts.length, posts });
   } catch (error) {
     console.error('Error fetching posts:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -101,7 +101,7 @@ export const deletePost = async (req, res) => {
 // Controller to reply to a post
 export const replyToPost = async (req, res) => {
   try {
-    const { text } = req.body;
+    const {text}  = req.body;
     const postId = req.params.id;
     const userId = req.user._id;
     const userProfilePic = req.user.profilePic;
