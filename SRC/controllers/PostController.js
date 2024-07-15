@@ -6,7 +6,7 @@ import { cloudinary } from "../utils/imageUpload.js";
 // Controller for creating a new post with image upload
 export const createPost = async (req, res) => {
   try {
-    const { text, category } = req.body; // Extract category from request body
+    const { text, category, title } = req.body; // Extract category from request body
     let img;
     console.log(req.file)
 
@@ -17,6 +17,10 @@ export const createPost = async (req, res) => {
     console.log(img)
 
     const postedBy = req.user._id;
+
+    if (!text || !title) {
+      return res.status(400).json({ error: "Title and Text fields are required" });
+    }
 
     if (!text) {
       return res.status(400).json({ error: "Text field is required" });
@@ -36,7 +40,8 @@ export const createPost = async (req, res) => {
       postedBy,
       img,
       text,
-      category // Include category in new post creation
+      category, // Include category in new post creation
+      title,
     });
 
     await newPost.save();
@@ -101,7 +106,8 @@ export const deletePost = async (req, res) => {
 // Controller to reply to a post
 export const replyToPost = async (req, res) => {
   try {
-    const {text}  = req.body;
+    console.log('Request Body:', req.body); // Log the request body to check if text is present
+    const text = req.body.text;
     const postId = req.params.id;
     const userId = req.user._id;
     const userProfilePic = req.user.profilePic;
@@ -235,4 +241,20 @@ export const getPostsByCategory = async (req, res) => {
   }
 };
 
+// Controller to get posts by title
+export const getPostsByTitle = async (req, res) => {
+  try {
+    const  title  = req.query.title;
+
+    const posts = await Post.find({ title: { $regex: title, $options: 'i' } });
+    if (posts.length === 0) {
+      return res.status(404).json({ message: 'No posts found with the given title' });
+    }
+
+    res.status(200).json({ message: 'Posts found successfully', posts });
+  } catch (error) {
+    console.error('Error fetching posts by title:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
 

@@ -1,6 +1,6 @@
 import express from "express";
 import {upload} from "../../utils/imageUpload.js"
-import { createPost, getAllPosts, getSinglePost, getSuggestedPosts, deletePost, likePost, unlikePost, replyToPost, trackUserSearch, getPostsByCategory} from "../../controllers/PostController.js"
+import { createPost, getAllPosts, getSinglePost, getSuggestedPosts, deletePost, getPostsByTitle, likePost, unlikePost, replyToPost, trackUserSearch, getPostsByCategory} from "../../controllers/PostController.js"
 import protectRoute from "../../middlewares/protectRoute.js"; 
 const router = express.Router()
 
@@ -15,6 +15,7 @@ router.post("/unlike/:id", protectRoute, unlikePost);
 router.post("/tracksearch",protectRoute, trackUserSearch);
 router.get("/suggested", protectRoute, getSuggestedPosts);
 router.get("/filter", protectRoute, getPostsByCategory);
+router.get("/filter/:id", protectRoute, getPostsByTitle);
 
 export default router
 

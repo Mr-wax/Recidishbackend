@@ -11,11 +11,14 @@ const postSchema = mongoose.Schema({
     type: String,
     maxlength:1000
   },
-
+  title: {
+    type: String,
+    maxlength:200
+  },
   category: {
      type: String,
      required: true,
-      enum:["rice", "soup","stew",] }, 
+      enum:["rice", "soup","stew","meat"] }, 
   img:{
     type: String,
     default: ''
