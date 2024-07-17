@@ -5,11 +5,11 @@ import { cloudinary } from "../utils/imageUpload.js";
 
 export const createPost = async (req, res) => {
   try {
-    const { text, category, title } = req.body; // Extract category from request body
+    const { text, category, title } = req.body;
     let img;
 
     if (req.file) {
-      const uploadedImg = await cloudinary.uploader.upload(req.file.path); // Ensure req.file.path is used
+      const uploadedImg = await cloudinary.uploader.upload(req.file.path);
       img = uploadedImg.secure_url;
     }
 

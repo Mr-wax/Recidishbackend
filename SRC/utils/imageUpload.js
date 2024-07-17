@@ -4,12 +4,12 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 
+// Configure Cloudinary
 cloudinary.config({
-  cloud_name:process.env.CLOUDINARY_CLOUD_NAME ,
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
-api_secret: process.env.CLOUDINARY_API_SECRET
+  api_secret: process.env.CLOUDINARY_API_SECRET
 });
-
 
 // Multer setup
 const storage = multer.diskStorage({
@@ -21,4 +21,7 @@ const storage = multer.diskStorage({
   }
 });
 
-export {upload,cloudinary};
+const upload = multer({ storage });
+
+// Export the modules
+export { upload, cloudinary };
