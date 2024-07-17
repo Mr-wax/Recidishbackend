@@ -10,18 +10,10 @@ cloudinary.config({
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
-
-// Multer setup
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/');
-  },
-  filename: (req, file, cb) => {
-    cb(null, `${Date.now()}-${file.originalname}`);
-  }
-});
-
+// Multer setup to store files in memory
+const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 // Export the modules
-export { upload, cloudinary };
+export { upload};
+export { cloudinary }

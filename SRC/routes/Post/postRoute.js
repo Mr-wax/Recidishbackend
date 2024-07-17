@@ -6,7 +6,7 @@ import protectRoute from "../../middlewares/protectRoute.js";
 const router = express.Router()
 
 
-router.post("/add", protectRoute ,upload.single("img"),createPost);
+router.post("/add", protectRoute, upload.single("img"),createPost);
 router.get("/", protectRoute, getAllPosts);
 router.get("/id/:id", protectRoute, getSinglePost);
 router.delete("/id/:id", protectRoute, deletePost);

@@ -1,47 +1,57 @@
 import User from "../models/UserModel.js";
 import Post from "../models/postModel.js";
-import { cloudinary } from "../utils/imageUpload.js";
+import { upload, cloudinary } from '../utils/imageUpload.js';
 
 
+
+// Controller for creating a new post with image upload
 export const createPost = async (req, res) => {
   try {
     const { text, category, title } = req.body;
     let img;
 
     if (req.file) {
-      const uploadedImg = await cloudinary.uploader.upload(req.file.path);
-      img = uploadedImg.secure_url;
+      // Upload image to Cloudinary directly from memory
+      const uploadedImg = await cloudinary.uploader.upload_stream({ resource_type: 'auto' }, (error, result) => {
+        if (error) {
+          console.error('Error uploading image to Cloudinary:', error);
+          return res.status(500).json({ error: 'Error uploading image' });
+        }
+        img = result.secure_url;
+
+        // Create the post after the image is uploaded
+        createNewPost();
+      }).end(req.file.buffer);
+    } else {
+      // No file to upload, create the post directly
+      createNewPost();
     }
 
-    const postedBy = req.user._id;
+    function createNewPost() {
+      const postedBy = req.user._id;
 
-    if (!text || !title) {
-      return res.status(400).json({ error: "Title and Text fields are required" });
+      if (!text || !title) {
+        return res.status(400).json({ error: "Title and Text fields are required" });
+      }
+
+      const newPost = new Post({
+        postedBy,
+        img,
+        text,
+        category,
+        title,
+      });
+
+      newPost.save()
+        .then(post => res.status(200).json({ message: 'Post created successfully', post }))
+        .catch(error => {
+          console.error('Error creating post:', error);
+          res.status(500).json({ error: 'Internal server error' });
+        });
     }
-
-    const user = await User.findById(postedBy);
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
-    const maxlength = 1000;
-    if (text.length > maxlength) {
-      return res.status(400).json({ error: `Text should not exceed ${maxlength} characters` });
-    }
-
-    const newPost = new Post({
-      postedBy,
-      img,
-      text,
-      category,
-      title,
-    });
-
-    await newPost.save();
-    res.status(200).json({ message: 'Post created successfully', newPost });
   } catch (error) {
+    console.error('Error creating post:', error);
     res.status(500).json({ error: 'Internal server error' });
-    console.error('Internal server error:', error);
   }
 };
 
