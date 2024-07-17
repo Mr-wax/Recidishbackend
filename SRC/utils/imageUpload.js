@@ -12,7 +12,13 @@ api_secret: process.env.CLOUDINARY_API_SECRET
 
 
 // Multer setup
-const storage = multer.diskStorage({});
-const upload = multer({ storage });
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/');
+  },
+  filename: (req, file, cb) => {
+    cb(null, `${Date.now()}-${file.originalname}`);
+  }
+});
 
 export {upload,cloudinary};

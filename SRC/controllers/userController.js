@@ -1,37 +1,42 @@
-import user from '../models/UserModel.js';
-import cryptoHash from "crypto"
+import User from '../models/UserModel.js';
+import cryptoHash from "crypto";
+import protectRoute from '../middlewares/protectRoute.js';
 
 export const getallUsers = async (req, res) => {
     try {
-        const allUsers = await UserActivation.find()
-        if (!allUsers) {
-            res.status(400).json({message: 'No users found'})
-    }   else {}
-    res.status(200).json({message: 'Users found successfully'})
-} catch (error) {
-    console.error('Error while getting all users:', error);
-    res.status(500).json({message: error.message})
-}};
-
-export const getSingleUser = async (req, res) => {
-    try { 
-        const userId =req.params.id
-        const singleUser =await user.findById(userId)
-        if (!singleUser) {
-            res.status(400).json({message: `No user with such id: ${userId} found`})
-        }  else {
-            res.status(200).json({message:'User found successfully', singleUser})
+        const allUsers = await User.find();
+        if (!allUsers || allUsers.length === 0) {
+            return res.status(400).json({message: 'No users found'});
         }
+        res.status(200).json({message: 'Users found successfully', data: allUsers});
     } catch (error) {
-        console.error('Error while getting single user', error);
-        res.status(500).json({message: error.message})
+        console.error('Error while getting all users:', error);
+        res.status(500).json({message: error.message});
     }
 };
+
+
+export const getSingleUser = async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const singleUser = await User.findById(userId);
+        
+        if (!singleUser) {
+            return res.status(404).json({ message: `No user with such id: ${userId} found` });
+        }
+        
+        res.status(200).json({ message: 'User found successfully', data: singleUser });
+    } catch (error) {
+        console.error('Error while getting single user:', error);
+        res.status(500).json({ message: error.message });
+    }
+};
+
 
 export const deleteSingleUser = async (req, res) => {
     try { 
         const userId =req.params.id
-        const singleUser =await user.findById(userId)
+        const singleUser =await User.findById(userId)
         if (!singleUser) {
             res.status(400).json({message: `No user with such id: ${userId} found`})
         }  else {
@@ -44,7 +49,7 @@ export const deleteSingleUser = async (req, res) => {
 
     export const freezeAccount = async(req, res) => {
         try {
-            const user = await User.findById(req.user._id)
+            const user = await user.findById(req.user._id)
             if (!user) {
                 res.status(401).json({message: "You are unauthorized to freeze this account"})
             }
@@ -97,26 +102,24 @@ export const deleteSingleUser = async (req, res) => {
     export const updateUser = async (req, res) => {
         try {
             const userId = req.params.id;
-            const { password, ...rest} = req.body;
-
+            const { password, ...rest } = req.body;
+    
+            let updatedUser;
+    
             if (password) {
-                const hashedPassword = cryptoHash.createHash('sha256').update(password).digest('hex');
-                
-                const updateUser = await user.findByIdAndUpdate(userId, {...rest, password:  hashedPassword}, {new: true})
-              
-                if (!updateUser) {
-                    return res.status(400).json({message: `User with id: ${userId} not found`});
-            } 
-            return res.status(200).json({message:'User updated successfully', updatedUser});
-        } else {
-            const updatedUser = await UserActivation.findByIdAndUpdate(userId, rest, {new: true});
+                const hashedPassword = crypto.createHash('sha256').update(password).digest('hex');
+                updatedUser = await User.findByIdAndUpdate(userId, { ...rest, password: hashedPassword }, { new: true });
+            } else {
+                updatedUser = await User.findByIdAndUpdate(userId, rest, { new: true });
+            }
+    
             if (!updatedUser) {
-                return res.status(400).json({message: `User with id: ${userId} not found`});
+                return res.status(404).json({ message: `User with id: ${userId} not found` });
+            }
+    
+            return res.status(200).json({ message: 'User updated successfully', data: updatedUser });
+        } catch (error) {
+            console.error('Error while updating user:', error);
+            res.status(500).json({ message: error.message });
         }
-        return res.status(200).json({message:'User updated successfully', updatedUser});
-    }             
-    } catch (error) {
-        console.error('Error while updating user:', error);
-        res.status(500).json({message: error.message});
-    }};
-
+    };

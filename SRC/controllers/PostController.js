@@ -3,27 +3,20 @@ import Post from "../models/postModel.js";
 import { cloudinary } from "../utils/imageUpload.js";
 
 
-// Controller for creating a new post with image upload
 export const createPost = async (req, res) => {
   try {
     const { text, category, title } = req.body; // Extract category from request body
     let img;
-    console.log(req.file)
 
     if (req.file) {
-      const uploadedImg = await cloudinary.uploader.upload(req.file);
+      const uploadedImg = await cloudinary.uploader.upload(req.file.path); // Ensure req.file.path is used
       img = uploadedImg.secure_url;
     }
-    console.log(img)
 
     const postedBy = req.user._id;
 
     if (!text || !title) {
       return res.status(400).json({ error: "Title and Text fields are required" });
-    }
-
-    if (!text) {
-      return res.status(400).json({ error: "Text field is required" });
     }
 
     const user = await User.findById(postedBy);
@@ -40,14 +33,12 @@ export const createPost = async (req, res) => {
       postedBy,
       img,
       text,
-      category, // Include category in new post creation
+      category,
       title,
     });
 
     await newPost.save();
-    res.status(200).json({ message: 'Post created successfully',  newPost });
-    console.log('Post created successfully', newPost);
-
+    res.status(200).json({ message: 'Post created successfully', newPost });
   } catch (error) {
     res.status(500).json({ error: 'Internal server error' });
     console.error('Internal server error:', error);

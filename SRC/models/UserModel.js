@@ -9,13 +9,15 @@ const userSchema = new Schema({
     },
     email: {
         type: String,
-        required: true,
-        unique: true
+        required: true
+        // unique: true
     },
     password: {
         type: String,
         required: true
     },
+    resetPasswordToken: String,
+    resetPasswordExpires: Date,
     cloudinary_id: {
         type: String,
         required: false
