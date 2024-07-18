@@ -6,13 +6,13 @@ export const signUpValidator = z
         password: z
             .string()
             .min(6, { message: 'Password should be at least 6 characters long' })
-            .max(16, { message: 'Password should not exceed 16 characters' })
+            .max(10, { message: 'Password should not exceed 10 characters' })
             .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]+$/, {
                 message: 'Password should contain at least one uppercase letter, one lowercase letter, one number, and one special character',
             }),
         confirmPassword: z.string()
             .min(6, { message: 'Password should be at least 6 characters long' })
-            .max(16, { message: 'Password should not exceed 16 characters' })
+            .max(10, { message: 'Password should not exceed 10 characters' })
             .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]+$/, {
                 message: 'Password should contain at least one uppercase letter, one lowercase letter, one number, and one special character',
             }),

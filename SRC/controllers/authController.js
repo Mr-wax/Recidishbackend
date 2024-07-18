@@ -99,67 +99,60 @@ export const resetPassword = async (req, res) => {
 export const signUp = async (req, res) => {
     const registerResults = signUpValidator.safeParse(req.body);
     if (!registerResults.success) {
-        return res.status(400).json(formatZodError(registerResults.error.issues));
+      return res.status(400).json(formatZodError(registerResults.error.issues));
     }
-
+  
     try {
-        const { name, email, password } = req.body;
-
-        // Check if user already exists
-        const existingUser = await User.findOne({ email });
-        if (existingUser) {
-            return res.status(409).json({ message: 'User already exists', user: existingUser });
-        }
-
-        // Hash the password
-        const encryptedPassword = hashValue(password);
-
-        // Create a new user
-        const newUser = new User({
-            name,
-            email,
-            password: encryptedPassword
-        });
-
-        await newUser.save();
-
-        res.status(200).json({ message: 'User registered successfully', newUser });
-        console.log('User registered successfully', newUser);
+      const { name, email, password } = req.body;
+  
+      // Check if user already exists
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        return res.status(409).json({ message: 'User already exists', user: existingUser });
+      }
+  
+      // Create a new user with the password hashing handled in the model
+      const newUser = new User({ name, email, password });
+  
+      await newUser.save();
+  
+      res.status(200).json({ message: 'User registered successfully', newUser });
+      console.log('User registered successfully', newUser);
     } catch (error) {
-        res.status(500).json({ message: 'Internal server error', error: error.message });
-        console.log('INTERNAL SERVER ERROR', error.message);
+      res.status(500).json({ message: 'Internal server error', error: error.message });
+      console.log('INTERNAL SERVER ERROR', error.message);
     }
-};
-
-// Controller for user login (sign-in)
-export const signIn = async (req, res) => {
+  };
+  
+  // Controller for user login (sign-in)
+  export const signIn = async (req, res) => {
     const loginResults = signInValidator.safeParse(req.body);
     if (!loginResults.success) {
-        return res.status(400).json(formatZodError(loginResults.error.issues));
+      return res.status(400).json(formatZodError(loginResults.error.issues));
     }
-
+  
     try {
-        const { email, password } = req.body;
-
-        // Find user by email
-        const user = await User.findOne({ email });
-        if (!user) {
-            return res.status(404).json({ message: 'User not found' });
-        }
-
-        // Compare passwords
-        const isPasswordValid = comparePasswords(password, user.password);
-        if (!isPasswordValid) {
-            return res.status(400).json({ message: 'Incorrect password' });
-        }
-
-        // Generate access token
-        const accessToken = generateTokenAndSetCookie(user._id, res);
-
-        res.status(200).json({ message: 'User logged in successfully', accessToken });
-        console.log('User logged in successfully', user);
+      const { email, password } = req.body;
+  
+      // Find user by email
+      const user = await User.findOne({ email });
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+  
+      // Compare passwords
+      const isPasswordValid = user.validatePassword(password);
+      if (!isPasswordValid) {
+        return res.status(400).json({ message: 'Incorrect password' });
+      }
+  
+      // Generate access token
+      const accessToken = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '1h' });
+  
+      res.status(200).json({ message: 'User logged in successfully', accessToken });
+      console.log('User logged in successfully', user);
     } catch (error) {
-        res.status(500).json({ message: 'Internal server error', error: error.message });
-        console.log('INTERNAL SERVER ERROR', error.message);
+      res.status(500).json({ message: 'Internal server error', error: error.message });
+      console.log('INTERNAL SERVER ERROR', error.message);
     }
-};
+  };
