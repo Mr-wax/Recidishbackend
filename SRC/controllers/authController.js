@@ -1,3 +1,4 @@
+import jwt from "jsonwebtoken";
 import crypto from 'crypto';
 import nodemailer from 'nodemailer';
 import User from '../models/UserModel.js';
@@ -18,89 +19,79 @@ function comparePasswords(inputPassword, hashedPassword) {
 }
 
 
+const JWT_SECRET = process.env.JWT_SECRET || 'everyonemustcollect';
+const JWT_EXPIRES_IN = '10m'; // Token expires in 10 minutes
+
 export const forgotPassword = async (req, res) => {
   const { email } = req.body;
-  
+
   try {
-    // Ensure email is provided
-    if (!email) {
-      return res.status(400).json({ message: 'Email is required' });
-    }
-
-    // Find the user by email
     const user = await User.findOne({ email });
-
-    // Log user details for debugging
-    console.log('User found:', user);
-
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
     // Generate a reset token
-    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetToken = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
 
-    // Hash and set reset token and expiration in user document
-    User.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
-    User.resetPasswordExpire = Date.now() + 10 * 60 * 1000; // Token expires in 10 minutes
-
-    // Save the user document
-    await user.save({ validateBeforeSave: false });
+    // Log the generated reset token
+    console.log('Generated reset token:', resetToken);
 
     // Create reset URL
-    const resetUrl = `${req.protocol}://${req.get('host')}/api/v1/users/resetpassword/${resetToken}`;
+    const resetUrl = `${req.protocol}://${req.get('host')}/api/user/resetpassword/${resetToken}`;
 
-    // Send email with reset instructions
+    // Send email
     const message = `You are receiving this email because you (or someone else) has requested the reset of a password. Please make a PUT request to: \n\n ${resetUrl}`;
     await sendEmail(user.email, 'Password Reset Token', message);
 
     res.status(200).json({ message: 'Email sent successfully' });
   } catch (error) {
-    console.error('Error sending password reset email:', error);
-
-    // Clear reset token and expiration in case of error
-    User.resetPasswordToken = undefined;
-    User.resetPasswordExpire = undefined;
-
-    await User.save({ validateBeforeSave: false });
-
-    res.status(500).json({ message: 'Internal server error' });
+    console.error('Error in forgotPassword:', error);
+    res.status(500).json({ message: 'Internal server error', error: error.message });
   }
 };
 
-
 export const resetPassword = async (req, res) => {
-    const resetToken = req.params.resetToken;
-    const { password } = req.body;
-    
-    try {
-      if (!resetToken || !password) {
-        return res.status(400).json({ message: 'Reset token and password are required' });
-      }
-  
-      const hashedResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
-      const user = await User.findOne({
-        resetPasswordToken: hashedResetToken,
-        resetPasswordExpire: { $gt: Date.now() }
-      });
-  
-      if (!user) {
-        return res.status(400).json({ message: 'Invalid or expired token' });
-      }
-  
-      // Set new password
-      user.password = password;
-      user.resetPasswordToken = undefined;
-      user.resetPasswordExpires = undefined;
-  
-      await user.save();
-  
-      res.status(200).json({ message: 'Password reset successfully' });
-    } catch (error) {
-      console.error('Error resetting password:', error);
-      res.status(500).json({ message: 'Internal server error' });
+  const resetToken = req.params.resetToken;
+  const { password } = req.body;
+
+  try {
+    if (!resetToken || !password) {
+      return res.status(400).json({ message: 'Reset token and password are required' });
     }
-  };
+
+    // Verify the reset token
+    const decoded = jwt.verify(resetToken, JWT_SECRET);
+
+    // Log the decoded token
+    console.log('Decoded reset token:', decoded);
+
+    const user = await User.findById(decoded.userId);
+
+    // Log the found user
+    console.log('User found:', user);
+
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid or expired token' });
+    }
+
+    // Set new password
+    user.password = password;
+    await user.save();
+
+    res.status(200).json({ message: 'Password reset successfully' });
+  } catch (error) {
+    console.error('Error in resetPassword:', error);
+    if (error.name === 'TokenExpiredError') {
+      return res.status(400).json({ message: 'Reset token has expired' });
+    } else if (error.name === 'JsonWebTokenError') {
+      return res.status(400).json({ message: 'Invalid reset token' });
+    }
+    res.status(500).json({ message: 'Internal server error', error: error.message });
+  }
+};
+
+  
   
 
 // Existing sign-up and sign-in functions...

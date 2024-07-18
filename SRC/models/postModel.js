@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import cryto from "crypto";
 
 
 const postSchema = mongoose.Schema({
@@ -28,6 +29,7 @@ const postSchema = mongoose.Schema({
     ref: "User",
     default: []
   },
+
 
   recentSearches: [String],  // Array to store recent search queries
   interactionHistory: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Post' }], // Array to store interacted posts
