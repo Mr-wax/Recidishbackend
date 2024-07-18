@@ -10,11 +10,11 @@ const postSchema = mongoose.Schema({
   },
   text:{
     type: String,
-    maxlength:1000
+    maxlength:3000
   },
   title: {
     type: String,
-    maxlength:200
+    maxlength:400
   },
   category: {
      type: String,
