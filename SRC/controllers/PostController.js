@@ -3,15 +3,12 @@ import Post from "../models/postModel.js";
 import { upload, cloudinary } from '../utils/imageUpload.js';
 
 
-
-// Controller for creating a new post with image upload
 export const createPost = async (req, res) => {
   try {
     const { text, category, title } = req.body;
     let img;
 
     if (req.file) {
-      // Upload image to Cloudinary directly from memory
       const uploadedImg = await cloudinary.uploader.upload_stream({ resource_type: 'auto' }, (error, result) => {
         if (error) {
           console.error('Error uploading image to Cloudinary:', error);
@@ -19,11 +16,9 @@ export const createPost = async (req, res) => {
         }
         img = result.secure_url;
 
-        // Create the post after the image is uploaded
         createNewPost();
       }).end(req.file.buffer);
     } else {
-      // No file to upload, create the post directly
       createNewPost();
     }
 
@@ -55,7 +50,7 @@ export const createPost = async (req, res) => {
   }
 };
 
-// Controller to get all posts
+
 export const getAllPosts = async (req, res) => {
   try {
     const posts = await Post.find();
@@ -66,7 +61,6 @@ export const getAllPosts = async (req, res) => {
   }
 };
 
-// Controller to get a single post by ID
 export const getSinglePost = async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
@@ -80,18 +74,17 @@ export const getSinglePost = async (req, res) => {
   }
 };
 
-// Controller to delete a post by ID
+
 export const deletePost = async (req, res) => {
   try {
     const post = await Post.findById(req.params.id);
     if (!post) {
       return res.status(404).json({ message: 'Post not found' });
     }
-    // Check if the user deleting the post is the owner
+    
     if (post.postedBy.toString() !== req.user._id.toString()) {
       return res.status(401).json({ message: 'You are not authorized to delete this post' });
     }
-    // Delete image from Cloudinary if it exists
     if (post.img) {
       const imgId = post.img.split("/").pop().split(".")[0];
       await cloudinary.uploader.destroy(imgId);
@@ -104,10 +97,9 @@ export const deletePost = async (req, res) => {
   }
 };
 
-// Controller to reply to a post
 export const replyToPost = async (req, res) => {
   try {
-    console.log('Request Body:', req.body); // Log the request body to check if text is present
+    console.log('Request Body:', req.body); 
     const text = req.body.text;
     const postId = req.params.id;
     const userId = req.user._id;
@@ -135,11 +127,11 @@ export const replyToPost = async (req, res) => {
   }
 };
 
-// Controller to like a post
+
 export const likePost = async (req, res) => {
   try {
     const post = await Post.findByIdAndUpdate(req.params.id, {
-      $addToSet: { likes: req.user._id } // Add user ID to likes array if not already present
+      $addToSet: { likes: req.user._id } 
     }, { new: true });
 
     if (!post) {
@@ -153,11 +145,11 @@ export const likePost = async (req, res) => {
   }
 };
 
-// Controller to unlike a post
+
 export const unlikePost = async (req, res) => {
   try {
     const post = await Post.findByIdAndUpdate(req.params.id, {
-      $pull: { likes: req.user._id } // Remove user ID from likes array
+      $pull: { likes: req.user._id } 
     }, { new: true });
 
     if (!post) {
@@ -170,7 +162,7 @@ export const unlikePost = async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
-// Controller to track user searches
+
 export const trackUserSearch = async (req, res) => {
   try {
       const { searchQuery } = req.body;
@@ -181,10 +173,9 @@ export const trackUserSearch = async (req, res) => {
           return res.status(404).json({ message: 'User not found' });
       }
 
-      // Add search query to recent searches
       user.recentSearches.push(searchQuery);
       if (user.recentSearches.length > 10) {
-          user.recentSearches.shift();  // Keep only the last 10 searches
+          user.recentSearches.shift();  
       }
 
       await user.save();
@@ -196,7 +187,7 @@ export const trackUserSearch = async (req, res) => {
   }
 };
 
-// Controller to get suggested posts
+
 export const getSuggestedPosts = async (req, res) => {
   try {
       const userId = req.user._id;
@@ -209,13 +200,12 @@ export const getSuggestedPosts = async (req, res) => {
       const recentSearches = user.recentSearches;
       const interactionHistory = user.interactionHistory;
 
-      // Find posts based on recent searches and interaction history
       let suggestedPosts = await Post.find({
           $or: [
               { tags: { $in: recentSearches } },
               { _id: { $in: interactionHistory } }
           ]
-      }).limit(20);  // Limit to 20 suggested posts
+      }).limit(20);  
 
       res.status(200).json({ message: 'Suggested posts found successfully', suggestedPosts });
   } catch (error) {
@@ -224,7 +214,7 @@ export const getSuggestedPosts = async (req, res) => {
   }
 };
 
-// Controller to get posts by category
+
 export const getPostsByCategory = async (req, res) => {
   try {
     const category  = req.query.category;
@@ -242,7 +232,6 @@ export const getPostsByCategory = async (req, res) => {
   }
 };
 
-// Controller to get posts by title
 export const getPostsByTitle = async (req, res) => {
   try {
     const  title  = req.query.title;

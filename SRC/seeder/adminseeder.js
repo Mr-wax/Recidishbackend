@@ -2,10 +2,7 @@ import mongoose from 'mongoose';
 import crytoHash from 'crypto';
 import  authenticateToken  from '../middlewares/roleBasedAccess.js';
 
-// Load your User model
-const User = require('./models/user'); // Adjust the path as necessary
 
-// Connect to your MongoDB database
 mongoose.connect(process.env.MONGO_URL)
     .then(() => {
         console.log('Database connection successful');
@@ -14,15 +11,13 @@ mongoose.connect(process.env.MONGO_URL)
         console.error('Database connection error:', err);
     });
 
-// Define the admin user
 const adminUser = {
     username: 'admin',
-    email: 'admin@example.com',
+    email: 'admin@gmail.com',
     password: crypto.createHash('sha256').update('adminpassword').digest('hex'),
-    role: 'admin', // Assuming you have a role field to distinguish admin users
+    role: 'admin', 
 };
 
-// Insert the admin user
 const seedAdmin = async () => {
     try {
         const existingAdmin = await User.findOne({ email: adminUser.email });

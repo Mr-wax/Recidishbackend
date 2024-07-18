@@ -19,7 +19,6 @@ export const signUpValidator = z
         email: z.string().min(3).max(30),
     })
     .refine(data => {
-        // Ensure all required fields are present
         return data.name && data.email && data.password && data.confirmPassword;
     }, {
         message: 'Please enter all the required fields',

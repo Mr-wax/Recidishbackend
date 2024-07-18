@@ -1,4 +1,4 @@
-// paymentController.js
+
 import paystack from '../utils/payment.js';
 
 export const initiatePayment = async (req, res) => {
@@ -24,7 +24,6 @@ export const verifyPayment = async (req, res) => {
     const verification = await paystack.verifyTransaction(reference);
 
     if (verification.data.status === 'success') {
-      // Handle successful payment verification (e.g., update order status, send email)
       res.status(200).json({ message: 'Payment verified successfully', data: verification.data });
     } else {
       res.status(400).json({ message: 'Payment verification failed', data: verification.data });

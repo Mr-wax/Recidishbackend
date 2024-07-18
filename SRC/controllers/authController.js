@@ -7,20 +7,18 @@ import { formatZodError } from '../utils/errorMessage.js';
 import generateTokenAndSetCookie from '../utils/genTokenAndSetCookies.js';
 import { sendEmail } from '../utils/mailer.js';
 
-
-// Function to hash a value using SHA-256
 function hashValue(value) {
     return crypto.createHash('sha256').update(value).digest('hex');
 }
 
-// Function to compare passwords
+
 function comparePasswords(inputPassword, hashedPassword) {
     return hashValue(inputPassword) === hashedPassword;
 }
 
 
 const JWT_SECRET = process.env.JWT_SECRET || 'everyonemustcollect';
-const JWT_EXPIRES_IN = '10m'; // Token expires in 10 minutes
+const JWT_EXPIRES_IN = '7d'; 
 
 export const forgotPassword = async (req, res) => {
   const { email } = req.body;
@@ -31,16 +29,14 @@ export const forgotPassword = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Generate a reset token
+    
     const resetToken = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
 
-    // Log the generated reset token
     console.log('Generated reset token:', resetToken);
 
-    // Create reset URL
+    
     const resetUrl = `${req.protocol}://${req.get('host')}/api/user/resetpassword/${resetToken}`;
 
-    // Send email
     const message = `You are receiving this email because you (or someone else) has requested the reset of a password. Please make a PUT request to: \n\n ${resetUrl}`;
     await sendEmail(user.email, 'Password Reset Token', message);
 
@@ -60,22 +56,20 @@ export const resetPassword = async (req, res) => {
       return res.status(400).json({ message: 'Reset token and password are required' });
     }
 
-    // Verify the reset token
+    
     const decoded = jwt.verify(resetToken, JWT_SECRET);
 
-    // Log the decoded token
+    
     console.log('Decoded reset token:', decoded);
 
     const user = await User.findById(decoded.userId);
 
-    // Log the found user
     console.log('User found:', user);
 
     if (!user) {
       return res.status(400).json({ message: 'Invalid or expired token' });
     }
 
-    // Set new password
     user.password = password;
     await user.save();
 
@@ -94,8 +88,6 @@ export const resetPassword = async (req, res) => {
   
   
 
-// Existing sign-up and sign-in functions...
-
 export const signUp = async (req, res) => {
     const registerResults = signUpValidator.safeParse(req.body);
     if (!registerResults.success) {
@@ -105,13 +97,12 @@ export const signUp = async (req, res) => {
     try {
       const { name, email, password } = req.body;
   
-      // Check if user already exists
+      
       const existingUser = await User.findOne({ email });
       if (existingUser) {
         return res.status(409).json({ message: 'User already exists', user: existingUser });
       }
   
-      // Create a new user with the password hashing handled in the model
       const newUser = new User({ name, email, password });
   
       await newUser.save();
@@ -124,7 +115,6 @@ export const signUp = async (req, res) => {
     }
   };
   
-  // Controller for user login (sign-in)
   export const signIn = async (req, res) => {
     const loginResults = signInValidator.safeParse(req.body);
     if (!loginResults.success) {
@@ -134,19 +124,16 @@ export const signUp = async (req, res) => {
     try {
       const { email, password } = req.body;
   
-      // Find user by email
       const user = await User.findOne({ email });
       if (!user) {
         return res.status(404).json({ message: 'User not found' });
       }
   
-      // Compare passwords
       const isPasswordValid = user.validatePassword(password);
       if (!isPasswordValid) {
         return res.status(400).json({ message: 'Incorrect password' });
       }
   
-      // Generate access token
       const accessToken = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '1h' });
   
       res.status(200).json({ message: 'User logged in successfully', accessToken });
