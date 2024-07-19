@@ -134,7 +134,7 @@ export const signUp = async (req, res) => {
         return res.status(400).json({ message: 'Incorrect password' });
       }
   
-      const accessToken = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '1h' });
+      const accessToken = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '15d' });
   
       res.status(200).json({ message: 'User logged in successfully', accessToken });
       console.log('User logged in successfully', user);
