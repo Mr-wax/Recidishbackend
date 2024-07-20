@@ -16,6 +16,9 @@ const postSchema = mongoose.Schema({
     type: String,
     maxlength:400
   },
+  ingredients: {
+    type: String,
+  },
   category: {
      type: String,
      required: true,

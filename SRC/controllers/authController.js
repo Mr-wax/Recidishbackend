@@ -17,9 +17,6 @@ function comparePasswords(inputPassword, hashedPassword) {
 }
 
 
-const JWT_SECRET = process.env.JWT_SECRET || 'everyonemustcollect';
-const JWT_EXPIRES_IN = '7d'; 
-
 export const forgotPassword = async (req, res) => {
   const { email } = req.body;
 
@@ -30,7 +27,7 @@ export const forgotPassword = async (req, res) => {
     }
 
     
-    const resetToken = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+    const resetToken = generateTokenAndSetCookie(user._id, res);
 
     console.log('Generated reset token:', resetToken);
 
@@ -134,7 +131,7 @@ export const signUp = async (req, res) => {
         return res.status(400).json({ message: 'Incorrect password' });
       }
   
-      const accessToken = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '15d' });
+      const accessToken = generateTokenAndSetCookie(user._id, res);
   
       res.status(200).json({ message: 'User logged in successfully', accessToken });
       console.log('User logged in successfully', user);

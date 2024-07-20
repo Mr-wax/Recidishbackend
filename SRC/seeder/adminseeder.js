@@ -1,38 +1,30 @@
 import mongoose from 'mongoose';
-import crytoHash from 'crypto';
-import  authenticateToken  from '../middlewares/roleBasedAccess.js';
+import User from '../models/UserModel.js'; // Ensure this path is correct
+import dotenv from 'dotenv';
 
+dotenv.config();
 
-mongoose.connect(process.env.MONGO_URL)
-    .then(() => {
-        console.log('Database connection successful');
-    })
-    .catch((err) => {
-        console.error('Database connection error:', err);
-    });
-
-const adminUser = {
-    username: 'admin',
-    email: 'admin@gmail.com',
-    password: crypto.createHash('sha256').update('adminpassword').digest('hex'),
-    role: 'admin', 
-};
-
-const seedAdmin = async () => {
+const seedAdmin = async (req, res) => {
     try {
-        const existingAdmin = await User.findOne({ email: adminUser.email });
+        const existingAdmin = await User.findOne({ email: process.env.ADMIN_EMAIL });
         if (existingAdmin) {
-            console.log('Admin user already exists');
-        } else {
-            const newAdmin = new User(adminUser);
-            await newAdmin.save();
-            console.log('Admin user created successfully');
+            return res.status(409).json({ message: 'Admin user already exists' });
         }
+
+        const adminUser = new User({
+            name: process.env.ADMIN_NAME,
+            email: process.env.ADMIN_EMAIL,
+            password: process.env.ADMIN_PASSWORD, // Ensure to hash the password as needed
+            role: 'admin',
+        });
+
+        await adminUser.save();
+
+        res.status(201).json({ message: 'Admin user created successfully', adminUser });
     } catch (error) {
         console.error('Error seeding admin user:', error);
-    } finally {
-        mongoose.connection.close();
+        res.status(500).json({ message: 'Internal server error', error: error.message });
     }
 };
 
-seedAdmin();
+export default seedAdmin;

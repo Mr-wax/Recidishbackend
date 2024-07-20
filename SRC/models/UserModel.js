@@ -16,6 +16,11 @@ const userSchema = new Schema({
     salt:{
         type: String,
     }, 
+    role: {
+        type: String,
+        enum: ['user', 'admin'],
+        default: 'user',
+    },
 
     password: {
         type: String,
@@ -27,11 +32,7 @@ const userSchema = new Schema({
         type: String,
         required: false
     },
-    isAdmin:{
-        type:Boolean,
-        required:false,
-        default:false
-    },
+    
     profilePic: {
         type: String,
         default: "https://res.cloudinary.com/dtt2xgmiv/image/upload/v1720604536/rwzfrg2n3wz3iewc2lvr.jpg" 
@@ -56,7 +57,7 @@ userSchema.pre('save', function (next) {
       });
     });
   });
-  
+
   userSchema.methods.validatePassword = function (password) {
     const hash = crypto.pbkdf2Sync(password, this.salt, 10000, 64, 'sha512').toString('hex');
     return this.password === hash;

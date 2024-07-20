@@ -1,21 +1,31 @@
-import jwt from 'jsonwebtoken';
-import User from '../models/UserModel.js';
+import jwt from "jsonwebtoken";
+import User from '../models/UserModel.js'; 
 
-// Middleware to verify the user's token and extract their role
- const authenticateToken = (req, res, next) => {
-  const token = req.headers['authorization'];
-  if (!token) return res.sendStatus(403);
+const protect = async (req, res, next) => {
+    let token;
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+        try {
+            token = req.headers.authorization.split(' ')[1];
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            req.user = await User.findById(decoded.id).select('-password');
+            next();
+        } catch (error) {
+            res.status(401).json({ message: 'Not authorized, token failed' });
+        }
+    }
 
-  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
-    if (err) return res.sendStatus(403);
-    req.user = user;
-    next();
-  });
+    if (!token) {
+        res.status(401).json({ message: 'Not authorized, no token' });
+    }
 };
 
- authorizeRole = (roles) => (req, res, next) => {
-  if (!roles.includes(req.user.role)) {
-    return res.status(403).json({ message: 'Access denied' });
-  }
-  next();
+const authorize = (...roles) => {
+    return (req, res, next) => {
+        if (!roles.includes(req.user.role)) {
+            return res.status(403).json({ message: 'User role not authorized' });
+        }
+        next();
+    };
 };
+
+export { protect, authorize };

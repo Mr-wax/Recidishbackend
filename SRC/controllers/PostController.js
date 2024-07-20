@@ -5,7 +5,7 @@ import { upload, cloudinary } from '../utils/imageUpload.js';
 
 export const createPost = async (req, res) => {
   try {
-    const { text, category, title } = req.body;
+    const { text, category, title, ingredients } = req.body;
     let img;
 
     if (req.file) {
@@ -35,6 +35,7 @@ export const createPost = async (req, res) => {
         text,
         category,
         title,
+        ingredients,
       });
 
       newPost.save()
