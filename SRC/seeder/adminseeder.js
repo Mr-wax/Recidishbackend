@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import User from '../models/UserModel.js'; // Ensure this path is correct
+import User from '../models/UserModel.js'; 
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -14,7 +14,7 @@ const seedAdmin = async (req, res) => {
         const adminUser = new User({
             name: process.env.ADMIN_NAME,
             email: process.env.ADMIN_EMAIL,
-            password: process.env.ADMIN_PASSWORD, // Ensure to hash the password as needed
+            password: process.env.ADMIN_PASSWORD, 
             role: 'admin',
         });
 

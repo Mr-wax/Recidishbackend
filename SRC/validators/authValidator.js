@@ -37,3 +37,6 @@ export const signInValidator = z.object({
     email: z.string(),
     password: z.string().min(6).max(10),
 }).required({ message: 'Please enter all the required fields' });
+
+
+export default ({signInValidator, signUpValidator});

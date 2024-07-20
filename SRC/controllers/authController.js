@@ -1,10 +1,9 @@
 import jwt from "jsonwebtoken";
 import crypto from 'crypto';
-import nodemailer from 'nodemailer';
 import User from '../models/UserModel.js';
 import { signUpValidator, signInValidator } from "../validators/authValidator.js";
-import { formatZodError } from '../utils/errorMessage.js';
-import generateTokenAndSetCookie from '../utils/genTokenAndSetCookies.js';
+import  {formatZodError } from '../utils/errorMessage.js';
+import  generateTokenAndSetCookie  from '../utils/genTokenAndSetCookies.js';
 import { sendEmail } from '../utils/mailer.js';
 
 function hashValue(value) {
@@ -32,7 +31,7 @@ export const forgotPassword = async (req, res) => {
     console.log('Generated reset token:', resetToken);
 
     
-    const resetUrl = `${req.protocol}://${req.get('host')}/api/user/resetpassword/${resetToken}`;
+    const resetUrl = `${req.protocol}:https://recidishbackend.onrender.com/api/user/resetpassword/${resetToken}`;
 
     const message = `You are receiving this email because you (or someone else) has requested the reset of a password. Please make a PUT request to: \n\n ${resetUrl}`;
     await sendEmail(user.email, 'Password Reset Token', message);
