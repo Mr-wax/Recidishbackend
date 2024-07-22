@@ -27,7 +27,8 @@ const userSchema = new Schema({
         required: true
     },
     resetPasswordToken: String,
-    resetPasswordExpires: Date,
+    resetPasswordExpires: Number, 
+
     cloudinary_id: {
         type: String,
         required: false

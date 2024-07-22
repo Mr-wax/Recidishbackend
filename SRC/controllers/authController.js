@@ -5,14 +5,8 @@ import { sendEmail } from '../utils/mailer.js';
 import  generateTokenAndSetCookie  from '../utils/genTokenAndSetCookies.js';
 import { signInValidator,signUpValidator } from '../validators/authValidator.js';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
-
 function hashValue(value) {
     return crypto.createHash('sha256').update(value).digest('hex');
-}
-
-function comparePasswords(inputPassword, hashedPassword) {
-    return hashValue(inputPassword) === hashedPassword;
 }
 
 export const forgotPassword = async (req, res) => {
@@ -24,12 +18,21 @@ export const forgotPassword = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        const resetToken = generateTokenAndSetCookie(user._id, res);
+        // Generate reset token and expiration
+        const resetToken = crypto.randomBytes(20).toString('hex');
+        const resetPasswordExpires = Date.now() + 3600000; 
+
+        // Update user with reset token and expiration
+        user.resetPasswordToken = resetToken;
+        user.resetPasswordExpires = resetPasswordExpires;
+        await user.save();
+
         console.log('Generated reset token:', resetToken);
+        console.log('Reset token expiration:', new Date(resetPasswordExpires));
 
-        const resetUrl = `${req.protocol}:https://recipe-hub-indol.vercel.app/${resetToken}`;
+        const resetUrl = `${req.protocol}://${req.get('host')}/api/user/resetpassword/${resetToken}`;
+
         const message = `You are receiving this email because you (or someone else) has requested the reset of a password. Please make a PUT request to: \n\n ${resetUrl}`;
-
         await sendEmail(user.email, 'Password Reset Token', message);
 
         res.status(200).json({ message: 'Email sent successfully' });
@@ -40,39 +43,38 @@ export const forgotPassword = async (req, res) => {
 };
 
 export const resetPassword = async (req, res) => {
-    const resetToken = req.params.resetToken;
-    const { password } = req.body;
+    const { passwordtoken, password } = req.body;
 
     try {
-        if (!resetToken || !password) {
-            return res.status(400).json({ message: 'Reset token and password are required' });
-        }
+        console.log('Received reset token:', passwordtoken);
 
-        const decoded = jwt.verify(resetToken, JWT_SECRET);
-        console.log('Decoded reset token:', decoded);
-
-        const user = await User.findById(decoded.userId);
-        console.log('User found:', user);
+        const user = await User.findOne({
+            resetPasswordToken: passwordtoken,
+            resetPasswordExpires: { $gt: Date.now() },
+        });
 
         if (!user) {
-            return res.status(400).json({ message: 'Invalid or expired token' });
+            console.log('Token is invalid or has expired');
+            return res.status(400).json({ message: 'Password reset token is invalid or has expired' });
         }
+
+        console.log('User found:', user);
 
         // Hash the new password before saving it
-        user.password = hashValue(password);
-        await user.save();
+        user.password = (password);
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpires = undefined;
 
-        res.status(200).json({ message: 'Password reset successfully' });
+        await user.save();
+        console.log(user)
+
+        res.status(200).json({ message: 'Password has been reset' });
     } catch (error) {
         console.error('Error in resetPassword:', error);
-        if (error.name === 'TokenExpiredError') {
-            return res.status(400).json({ message: 'Reset token has expired' });
-        } else if (error.name === 'JsonWebTokenError') {
-            return res.status(400).json({ message: 'Invalid reset token' });
-        }
         res.status(500).json({ message: 'Internal server error', error: error.message });
     }
 };
+
 
   
   
