@@ -1,5 +1,4 @@
 import mongoose from "mongoose";
-import cryto from "crypto";
 
 
 const postSchema = mongoose.Schema({
@@ -18,7 +17,8 @@ const postSchema = mongoose.Schema({
   },
   ingredients: {
     type: String,
-    required: true
+    required: true,
+    maxlength:3000
   },
   category: {
      type: String,

@@ -1,84 +1,77 @@
-import jwt from "jsonwebtoken";
 import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
 import User from '../models/UserModel.js';
-import { signUpValidator, signInValidator } from "../validators/authValidator.js";
-import  {formatZodError } from '../utils/errorMessage.js';
-import  generateTokenAndSetCookie  from '../utils/genTokenAndSetCookies.js';
 import { sendEmail } from '../utils/mailer.js';
+import  generateTokenAndSetCookie  from '../utils/genTokenAndSetCookies.js';
+import { signInValidator,signUpValidator } from '../validators/authValidator.js';
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your_jwt_secret';
 
 function hashValue(value) {
     return crypto.createHash('sha256').update(value).digest('hex');
 }
 
-
 function comparePasswords(inputPassword, hashedPassword) {
     return hashValue(inputPassword) === hashedPassword;
 }
 
-
 export const forgotPassword = async (req, res) => {
-  const { email } = req.body;
+    const { email } = req.body;
 
-  try {
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+    try {
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const resetToken = generateTokenAndSetCookie(user._id, res);
+        console.log('Generated reset token:', resetToken);
+
+        const resetUrl = `${req.protocol}:https://recipe-hub-indol.vercel.app/${resetToken}`;
+        const message = `You are receiving this email because you (or someone else) has requested the reset of a password. Please make a PUT request to: \n\n ${resetUrl}`;
+
+        await sendEmail(user.email, 'Password Reset Token', message);
+
+        res.status(200).json({ message: 'Email sent successfully' });
+    } catch (error) {
+        console.error('Error in forgotPassword:', error);
+        res.status(500).json({ message: 'Internal server error', error: error.message });
     }
-
-    
-    const resetToken = generateTokenAndSetCookie(user._id, res);
-
-    console.log('Generated reset token:', resetToken);
-
-    
-    const resetUrl = `${req.protocol}:https://recidishbackend.onrender.com/api/user/resetpassword/${resetToken}`;
-
-    const message = `You are receiving this email because you (or someone else) has requested the reset of a password. Please make a PUT request to: \n\n ${resetUrl}`;
-    await sendEmail(user.email, 'Password Reset Token', message);
-
-    res.status(200).json({ message: 'Email sent successfully' });
-  } catch (error) {
-    console.error('Error in forgotPassword:', error);
-    res.status(500).json({ message: 'Internal server error', error: error.message });
-  }
 };
 
 export const resetPassword = async (req, res) => {
-  const resetToken = req.params.resetToken;
-  const { password } = req.body;
+    const resetToken = req.params.resetToken;
+    const { password } = req.body;
 
-  try {
-    if (!resetToken || !password) {
-      return res.status(400).json({ message: 'Reset token and password are required' });
+    try {
+        if (!resetToken || !password) {
+            return res.status(400).json({ message: 'Reset token and password are required' });
+        }
+
+        const decoded = jwt.verify(resetToken, JWT_SECRET);
+        console.log('Decoded reset token:', decoded);
+
+        const user = await User.findById(decoded.userId);
+        console.log('User found:', user);
+
+        if (!user) {
+            return res.status(400).json({ message: 'Invalid or expired token' });
+        }
+
+        // Hash the new password before saving it
+        user.password = hashValue(password);
+        await user.save();
+
+        res.status(200).json({ message: 'Password reset successfully' });
+    } catch (error) {
+        console.error('Error in resetPassword:', error);
+        if (error.name === 'TokenExpiredError') {
+            return res.status(400).json({ message: 'Reset token has expired' });
+        } else if (error.name === 'JsonWebTokenError') {
+            return res.status(400).json({ message: 'Invalid reset token' });
+        }
+        res.status(500).json({ message: 'Internal server error', error: error.message });
     }
-
-    
-    const decoded = jwt.verify(resetToken, JWT_SECRET);
-
-    
-    console.log('Decoded reset token:', decoded);
-
-    const user = await User.findById(decoded.userId);
-
-    console.log('User found:', user);
-
-    if (!user) {
-      return res.status(400).json({ message: 'Invalid or expired token' });
-    }
-
-    user.password = password;
-    await user.save();
-
-    res.status(200).json({ message: 'Password reset successfully' });
-  } catch (error) {
-    console.error('Error in resetPassword:', error);
-    if (error.name === 'TokenExpiredError') {
-      return res.status(400).json({ message: 'Reset token has expired' });
-    } else if (error.name === 'JsonWebTokenError') {
-      return res.status(400).json({ message: 'Invalid reset token' });
-    }
-    res.status(500).json({ message: 'Internal server error', error: error.message });
-  }
 };
 
   
