@@ -30,7 +30,7 @@ export const forgotPassword = async (req, res) => {
         console.log('Generated reset token:', resetToken);
         console.log('Reset token expiration:', new Date(resetPasswordExpires));
 
-        const resetUrl = `${req.protocol}://${req.get('host')}/api/user/resetpassword/${resetToken}`;
+        const resetUrl = `${req.protocol}://https://recipe-hub-indol.vercel.app/${resetToken}`;
 
         const message = `You are receiving this email because you (or someone else) has requested the reset of a password. Please make a PUT request to: \n\n ${resetUrl}`;
         await sendEmail(user.email, 'Password Reset Token', message);
@@ -68,7 +68,7 @@ export const resetPassword = async (req, res) => {
         await user.save();
         console.log(user)
 
-        res.status(200).json({ message: 'Password has been reset' });
+        res.status(200).json({ message: 'Password has been reset successfully' });
     } catch (error) {
         console.error('Error in resetPassword:', error);
         res.status(500).json({ message: 'Internal server error', error: error.message });
