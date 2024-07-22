@@ -18,11 +18,12 @@ const postSchema = mongoose.Schema({
   },
   ingredients: {
     type: String,
+    required: true
   },
   category: {
      type: String,
      required: true,
-      enum:["rice", "soup","stew","meat"] }, 
+      enum:["rice", "soup","stew", "snacks"] }, 
   img:{
     type: String,
     default: ''
