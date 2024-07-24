@@ -134,3 +134,8 @@ export const signUp = async (req, res) => {
       console.log('INTERNAL SERVER ERROR', error.message);
     }
   };
+
+  export const logout = (req, res) => {
+    res.clearCookie('token'); 
+    res.status(200).json({ message: 'User logged out successfully' });
+  };

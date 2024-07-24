@@ -47,18 +47,7 @@ export const deleteSingleUser = async (req, res) => {
         res.status(500).json({message: error.message})
     }};
 
-    export const freezeAccount = async(req, res) => {
-        try {
-            const user = await user.findById(req.user._id)
-            if (!user) {
-                res.status(401).json({message: "You are unauthorized to freeze this account"})
-            }
-            user.isFrozen = true
-            await user.save()
-        } catch (error) {
-            res.status(500).json({message:error})
-        }
-    };
+
 
     export const deleteAllUsers = async (req, res) => {
         try {

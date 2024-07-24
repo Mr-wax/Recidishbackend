@@ -86,15 +86,18 @@ export const deletePost = async (req, res) => {
     if (post.postedBy.toString() !== req.user._id.toString()) {
       return res.status(401).json({ message: 'You are not authorized to delete this post' });
     }
+    
     if (post.img) {
+      console.log('Post image URL:', post.img);
       const imgId = post.img.split("/").pop().split(".")[0];
       await cloudinary.uploader.destroy(imgId);
     }
-    await post.delete();
+    
+    await Post.deleteOne({ _id: req.params.id }); // Correct method to delete a document
     res.status(200).json({ message: 'Post deleted successfully' });
   } catch (error) {
     console.error('Error deleting post:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Internal server error', details: error.message });
   }
 };
 

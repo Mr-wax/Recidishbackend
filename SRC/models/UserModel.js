@@ -21,7 +21,10 @@ const userSchema = new Schema({
         enum: ['user', 'admin'],
         default: 'user',
     },
-
+    isFrozen: {
+        type: Boolean,
+        default: false
+    },
     password: {
         type: String,
         required: true

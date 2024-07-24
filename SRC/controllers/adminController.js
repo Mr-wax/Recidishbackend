@@ -12,6 +12,30 @@ export const getAllUsers = async (req, res) => {
     }
 };
 
+export const freezeAccount = async (req, res) => {
+    try {
+        // Check if the logged-in user is an admin
+        const adminUser = await User.findById(req.user._id);
+        if (!adminUser || !adminUser.isAdmin) {
+            return res.status(401).json({ message: "You are unauthorized to freeze this account" });
+        }
+
+        // Find the user to be frozen
+        const user = await User.findById(req.params.userId);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // Freeze the user's account
+        user.isFrozen = true;
+        await user.save();
+
+        res.status(200).json({ message: "User account has been frozen" });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
 export const getUserById = async (req, res) => {
     try {
         const user = await User.findById(req.params.id);

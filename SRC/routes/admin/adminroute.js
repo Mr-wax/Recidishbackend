@@ -6,4 +6,5 @@ const router = express.Router();
 router.post('/adminlogin', adminSignIn);
 router.post('/seed-admin', seedAdmin);
 
+
 export default router;
