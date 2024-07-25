@@ -32,7 +32,7 @@ export const forgotPassword = async (req, res) => {
 
         const resetUrl = `${req.protocol}://https://recipe-hub-indol.vercel.app/reset/${resetToken}`;
 
-        const message = `You are receiving this email because you (or someone else) has requested the reset of a password. Please make a PUT request to: \n\n ${resetUrl}`;
+        const message = `You are receiving this email because you (or someone else) has requested the reset of a password. Please click the link to reset your password: \n\n ${resetUrl}`;
         await sendEmail(user.email, 'Password Reset Token', message);
 
         res.status(200).json({ message: 'Email sent successfully' });
