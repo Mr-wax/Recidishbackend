@@ -30,7 +30,7 @@ export const forgotPassword = async (req, res) => {
         console.log('Generated reset token:', resetToken);
         console.log('Reset token expiration:', new Date(resetPasswordExpires));
 
-        const resetUrl = `${req.protocol}://https://recipe-hub-indol.vercel.app/reset/yourJwtToken${resetToken}`;
+        const resetUrl = `${req.protocol}://https://recipe-hub-indol.vercel.app/reset/${resetToken}`;
 
         const message = `You are receiving this email because you (or someone else) has requested the reset of a password. Please make a PUT request to: \n\n ${resetUrl}`;
         await sendEmail(user.email, 'Password Reset Token', message);
