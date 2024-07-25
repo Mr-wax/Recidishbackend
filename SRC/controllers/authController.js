@@ -43,40 +43,37 @@ export const forgotPassword = async (req, res) => {
 };
 
 export const resetPassword = async (req, res) => {
-    const { passwordtoken, password } = req.body;
+  const { passwordtoken, password } = req.body;
 
-    try {
-        console.log('Received reset token:', passwordtoken);
+  try {
+      console.log('Received reset token:', passwordtoken);
 
-        const user = await User.findOne({
-            resetPasswordToken: passwordtoken,
-            resetPasswordExpires: { $gt: Date.now() },
-        });
+      const user = await User.findOne({
+          resetPasswordToken: passwordtoken,
+          resetPasswordExpires: { $gt: Date.now() },
+      });
 
-        if (!user) {
-            console.log('Token is invalid or has expired');
-            return res.status(400).json({ message: 'Password reset token is invalid or has expired' });
-        }
+      if (!user) {
+          console.log('Token is invalid or has expired');
+          return res.status(400).json({ message: 'Password reset token is invalid or has expired' });
+      }
 
-        console.log('User found:', user);
+      console.log('User found:', user);
 
-        // Hash the new password before saving it
-        user.password = (password);
-        user.resetPasswordToken = undefined;
-        user.resetPasswordExpires = undefined;
+      // Hash the new password before saving it
+      user.password = (password);
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpires = undefined;
 
-        await user.save();
-        console.log(user)
+      await user.save();
+      console.log(user)
 
-        res.status(200).json({ message: 'Password has been reset successfully' });
-    } catch (error) {
-        console.error('Error in resetPassword:', error);
-        res.status(500).json({ message: 'Internal server error', error: error.message });
-    }
+      res.status(200).json({ message: 'Password has been reset successfully' });
+  } catch (error) {
+      console.error('Error in resetPassword:', error);
+      res.status(500).json({ message: 'Internal server error', error: error.message });
+  }
 };
-
-
-  
   
 
 export const signUp = async (req, res) => {
