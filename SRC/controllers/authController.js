@@ -20,7 +20,7 @@ export const forgotPassword = async (req, res) => {
 
         // Generate reset token and expiration
         const resetToken = crypto.randomBytes(20).toString('hex');
-        const resetPasswordExpires = Date.now() + 3600000; 
+        const resetPasswordExpires = Date.now() + 7200000; 
 
         // Update user with reset token and expiration
         user.resetPasswordToken = resetToken;
