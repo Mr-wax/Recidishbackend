@@ -167,6 +167,21 @@ export const unlikePost = async (req, res) => {
   }
 };
 
+export const getLikedPosts = async (req, res) => {
+  try {
+    const likedPosts = await Post.find({ likes: req.user._id });
+
+    if (likedPosts.length === 0) {
+      return res.status(404).json({ message: 'No liked posts found' });
+    }
+
+    res.status(200).json({ message: 'Liked posts retrieved successfully', posts: likedPosts });
+  } catch (error) {
+    console.error('Error retrieving liked posts:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 export const trackUserSearch = async (req, res) => {
   try {
       const { searchQuery } = req.body;

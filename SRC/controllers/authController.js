@@ -126,6 +126,7 @@ export const signUp = async (req, res) => {
   
       res.status(200).json({ message: 'User logged in successfully', accessToken });
       console.log('User logged in successfully', user);
+      console.log('userId', user._id);
     } catch (error) {
       res.status(500).json({ message: 'Internal server error', error: error.message });
       console.log('INTERNAL SERVER ERROR', error.message);
