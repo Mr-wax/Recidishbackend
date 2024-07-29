@@ -75,62 +75,71 @@ export const resetPassword = async (req, res) => {
   }
 };
   
+const formatZodError = (issues) => {
+  return issues.map(issue => {
+    return {
+      path: issue.path.join('.'),
+      message: issue.message
+    };
+  });
+};
 
 export const signUp = async (req, res) => {
-    const registerResults = signUpValidator.safeParse(req.body);
-    if (!registerResults.success) {
-      return res.status(400).json(formatZodError(registerResults.error.issues));
+  const registerResults = signUpValidator.safeParse(req.body);
+  if (!registerResults.success) {
+    return res.status(400).json(formatZodError(registerResults.error.issues));
+  }
+
+  try {
+    const { name, email, password } = req.body;
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(409).json({ message: 'User already exists', user: existingUser });
     }
-  
-    try {
-      const { name, email, password } = req.body;
-  
-      
-      const existingUser = await User.findOne({ email });
-      if (existingUser) {
-        return res.status(409).json({ message: 'User already exists', user: existingUser });
-      }
-  
-      const newUser = new User({ name, email, password });
-  
-      await newUser.save();
-  
-      res.status(200).json({ message: 'User registered successfully', newUser });
-      console.log('User registered successfully', newUser);
-    } catch (error) {
-      res.status(500).json({ message: 'Internal server error', error: error.message });
-      console.log('INTERNAL SERVER ERROR', error.message);
+
+    const newUser = new User({ name, email, password });
+    await newUser.save();
+
+    // Generate access token and set it as a cookie
+    const accessToken = generateTokenAndSetCookie(newUser._id, res);
+
+    res.status(200).json({ message: 'User registered successfully', newUser, accessToken });
+    console.log('User registered successfully', newUser);
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error', error: error.message });
+    console.log('INTERNAL SERVER ERROR', error.message);
+  }
+};
+
+export const signIn = async (req, res) => {
+  const loginResults = signInValidator.safeParse(req.body);
+  if (!loginResults.success) {
+    return res.status(400).json(formatZodError(loginResults.error.issues));
+  }
+
+  try {
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
     }
-  };
-  
-  export const signIn = async (req, res) => {
-    const loginResults = signInValidator.safeParse(req.body);
-    if (!loginResults.success) {
-      return res.status(400).json(formatZodError(loginResults.error.issues));
+
+    const isPasswordValid = user.validatePassword(password);
+    if (!isPasswordValid) {
+      return res.status(400).json({ message: 'Incorrect password' });
     }
-  
-    try {
-      const { email, password } = req.body;
-  
-      const user = await User.findOne({ email });
-      if (!user) {
-        return res.status(404).json({ message: 'User not found' });
-      }
-  
-      const isPasswordValid = user.validatePassword(password);
-      if (!isPasswordValid) {
-        return res.status(400).json({ message: 'Incorrect password' });
-      }
-  
-      const accessToken = generateTokenAndSetCookie(user._id, res);
-  
-      res.status(200).json({ message: 'User logged in successfully', accessToken, user });
-      console.log('User logged in successfully', user);
-    } catch (error) {
-      res.status(500).json({ message: 'Internal server error', error: error.message });
-      console.log('INTERNAL SERVER ERROR', error.message);
-    }
-  };
+
+    const accessToken = generateTokenAndSetCookie(user._id, res);
+
+    res.status(200).json({ message: 'User logged in successfully', accessToken, user });
+    console.log('User logged in successfully', user);
+  } catch (error) {
+    res.status(500).json({ message: 'Internal server error', error: error.message });
+    console.log('INTERNAL SERVER ERROR', error.message);
+  }
+};
 
   export const logout = (req, res) => {
     res.clearCookie('token'); 

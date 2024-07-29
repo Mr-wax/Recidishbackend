@@ -4,6 +4,7 @@ import postRoute from "../routes/Post/postRoute.js"
 import userRoute from "../routes/user/userRoute.js"
 import paymentRoute from "../routes/payment/paymenRoute.js"
 import adminroute from "../routes/admin/adminroute.js";
+import premiumPostRoute from "../routes/Post/premiumPostRoute.js";
 
 const router = express.Router()
 
@@ -12,4 +13,5 @@ router.use('/auth', authRoute)
 router.use('/post', postRoute)
 router.use('/user', userRoute)
 router.use('/payment', paymentRoute)
+router.use('/premium', premiumPostRoute)
 export default router
