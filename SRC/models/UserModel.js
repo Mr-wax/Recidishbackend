@@ -30,7 +30,7 @@ const userSchema = new Schema({
         required: true
     },
     resetPasswordToken: String,
-    resetPasswordExpires: Number, 
+    resetPasswordExpires: Date, 
 
     cloudinary_id: {
         type: String,
@@ -43,24 +43,6 @@ const userSchema = new Schema({
     }
 });
 
-// Method to hash password
-userSchema.methods.hashPassword = function(password) {
-  return crypto.createHash('sha256').update(password).digest('hex');
-};
-
-// Middleware to hash password before saving
-userSchema.pre('save', function(next) {
-  if (this.isModified('password')) {
-    this.password = this.hashPassword(this.password);
-  }
-  next();
-});
-
-// Method to compare passwords
-userSchema.methods.validatePassword = function(password) {
-  const hashedPassword = this.hashPassword(password);
-  return this.password === hashedPassword;
-};
 
 const User = mongoose.model('User', userSchema);
 

@@ -3,10 +3,11 @@ import jwt from 'jsonwebtoken';
 import User from '../models/UserModel.js';
 import { sendEmail } from '../utils/mailer.js';
 import  generateTokenAndSetCookie  from '../utils/genTokenAndSetCookies.js';
-import { signInValidator,signUpValidator, passwordValidator } from '../validators/authValidator.js';
+import { signInValidator, signUpValidator, passwordValidator, formatZodError } from '../validators/authValidator.js';
+import bcrypt from "bcrypt";
 
 function hashValue(value) {
-    return crypto.createHash('sha256').update(value).digest('hex');
+  return crypto.createHash('sha256').update(value).digest('hex');
 }
 
 export const forgotPassword = async (req, res) => {
@@ -47,43 +48,30 @@ export const resetPassword = async (req, res) => {
   const { passwordtoken, password } = req.body;
 
   try {
-    console.log('Received reset token:', passwordtoken);
-
-    // Validate the new password
-    const validation = passwordValidator.safeParse(password);
-
-    if (!validation.success) {
-      return res.status(400).json(formatZodError(validation.error.issues));
-    }
-
     const user = await User.findOne({
       resetPasswordToken: passwordtoken,
       resetPasswordExpires: { $gt: Date.now() },
     });
 
     if (!user) {
-      console.log('Token is invalid or has expired');
       return res.status(400).json({ message: 'Password reset token is invalid or has expired' });
     }
 
-    console.log('User found:', user);
-
-    // Hash the new password before saving it
     const hashedPassword = hashValue(password);
-    console.log('New hashed password:', password);
     user.password = hashedPassword;
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
 
     await user.save();
-    console.log('User after saving new password:', user);
+    console.log('User after resetting password:', user);
 
     res.status(200).json({ message: 'Password has been reset successfully' });
   } catch (error) {
-    console.error('Error in resetPassword:', error);
+    console.error('Error during password reset:', error);
     res.status(500).json({ message: 'Internal server error', error: error.message });
   }
 };
+
 
 export const signUp = async (req, res) => {
   const registerResults = signUpValidator.safeParse(req.body);
@@ -99,14 +87,20 @@ export const signUp = async (req, res) => {
       return res.status(409).json({ message: 'User already exists', user: existingUser });
     }
 
-    const newUser = new User({ name, email, password });
+    // Hash the password before saving
+    const hashedPassword = hashValue(password);
+    console.log('Hashing password:', password);
+    console.log('Hashed password:', hashedPassword);
+
+    const newUser = new User({ name, email, password: hashedPassword });
+
     await newUser.save();
 
     res.status(200).json({ message: 'User registered successfully', newUser });
-    console.log('User registered successfully', newUser);
+    console.log('User registered successfully:', newUser);
   } catch (error) {
     res.status(500).json({ message: 'Internal server error', error: error.message });
-    console.log('INTERNAL SERVER ERROR', error.message);
+    console.log('INTERNAL SERVER ERROR:', error.message);
   }
 };
 
@@ -125,7 +119,12 @@ export const signIn = async (req, res) => {
     }
 
     // Validate the hashed password
-    const isPasswordValid = user.validatePassword(password);
+    const hashedPassword = hashValue(password);
+    console.log('Provided password:', password);
+    console.log('Hashed provided password:', hashedPassword);
+    console.log('Stored hashed password:', user.password);
+
+    const isPasswordValid = user.password === hashedPassword;
     console.log('Password validation result:', isPasswordValid);
 
     if (!isPasswordValid) {
@@ -135,13 +134,12 @@ export const signIn = async (req, res) => {
     const accessToken = generateTokenAndSetCookie(user._id, res);
 
     res.status(200).json({ message: 'User logged in successfully', accessToken, user });
-    console.log('User logged in successfully', user);
+    console.log('User logged in successfully:', user);
   } catch (error) {
     res.status(500).json({ message: 'Internal server error', error: error.message });
-    console.log('INTERNAL SERVER ERROR', error.message);
+    console.log('INTERNAL SERVER ERROR:', error.message);
   }
 };
-
   export const logout = (req, res) => {
     res.clearCookie('token'); 
     res.status(200).json({ message: 'User logged out successfully' });
