@@ -70,7 +70,7 @@ export const resetPassword = async (req, res) => {
 
     // Hash the new password before saving it
     const hashedPassword = hashValue(password);
-    console.log('New hashed password:', hashedPassword);
+    console.log('New hashed password:', password);
     user.password = hashedPassword;
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
@@ -126,6 +126,8 @@ export const signIn = async (req, res) => {
 
     // Validate the hashed password
     const isPasswordValid = user.validatePassword(password);
+    console.log('Password validation result:', isPasswordValid);
+
     if (!isPasswordValid) {
       return res.status(400).json({ message: 'Incorrect password' });
     }
@@ -139,6 +141,7 @@ export const signIn = async (req, res) => {
     console.log('INTERNAL SERVER ERROR', error.message);
   }
 };
+
   export const logout = (req, res) => {
     res.clearCookie('token'); 
     res.status(200).json({ message: 'User logged out successfully' });
