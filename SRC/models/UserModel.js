@@ -43,30 +43,25 @@ const userSchema = new Schema({
     }
 });
 
-userSchema.pre('save', function (next) {
-    const user = this;
-  
-    if (!user.isModified('password')) {
-      return next();
-    }
-  
-    crypto.randomBytes(16, (err, buf) => {
-      if (err) return next(err);
-      user.salt = buf.toString('hex');
-  
-      crypto.pbkdf2(user.password, user.salt, 10000, 64, 'sha512', (err, derivedKey) => {
-        if (err) return next(err);
-        user.password = derivedKey.toString('hex');
-        next();
-      });
-    });
-  });
+// Method to hash password
+userSchema.methods.hashPassword = function(password) {
+  return crypto.createHash('sha256').update(password).digest('hex');
+};
 
-  userSchema.methods.validatePassword = function (password) {
-    const hash = crypto.pbkdf2Sync(password, this.salt, 10000, 64, 'sha512').toString('hex');
-    return this.password === hash;
-  };
-  
-  const User = mongoose.model('User', userSchema);
-  
-  export default User ;
+// Middleware to hash password before saving
+userSchema.pre('save', function(next) {
+  if (this.isModified('password')) {
+    this.password = this.hashPassword(this.password);
+  }
+  next();
+});
+
+// Method to compare passwords
+userSchema.methods.validatePassword = function(password) {
+  const hashedPassword = this.hashPassword(password);
+  return this.password === hashedPassword;
+};
+
+const User = mongoose.model('User', userSchema);
+
+export default User;
