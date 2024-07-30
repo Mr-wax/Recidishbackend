@@ -5,63 +5,54 @@ import { upload, cloudinary } from '../utils/imageUpload.js';
 
 export const createPost = async (req, res) => {
   try {
-    const { text, category, title, ingredients, recommendations, tips } = req.body;
-    const postedBy = req.user._id;
-
-    console.log('Request body:', req.body); // Log the request body
-
-    if (!text || !title) {
-      return res.status(400).json({ error: "Title and Text fields are required" });
-    }
-
-    let img = null;
+    const { text, category, title, ingredients, tips, recommendations  } = req.body;
+    let img;
 
     if (req.file) {
-      try {
-        console.log('Uploading image to Cloudinary...');
-        const result = await new Promise((resolve, reject) => {
-          const uploadStream = cloudinary.uploader.upload_stream({ resource_type: 'auto' }, (error, result) => {
-            if (error) {
-              reject(error);
-            } else {
-              resolve(result);
-            }
-          });
-          uploadStream.end(req.file.buffer);
-        });
+      const uploadedImg = await cloudinary.uploader.upload_stream({ resource_type: 'auto' }, (error, result) => {
+        if (error) {
+          console.error('Error uploading image to Cloudinary:', error);
+          return res.status(500).json({ error: 'Error uploading image' });
+        }
         img = result.secure_url;
-        console.log('Image uploaded successfully:', img);
-      } catch (error) {
-        console.error('Error uploading image to Cloudinary:', error);
-        return res.status(500).json({ error: 'Error uploading image' });
-      }
+
+        createNewPost();
+      }).end(req.file.buffer);
+    } else {
+      createNewPost();
     }
 
-    console.log('Creating new post...');
-    const newPost = new Post({
-      postedBy,
-      img,
-      text,
-      category,
-      title,
-      ingredients,
-      recommendations,
-      tips,
-    });
+    function createNewPost() {
+      const postedBy = req.user._id;
 
-    try {
-      const post = await newPost.save();
-      console.log('Post created successfully:', post);
-      res.status(200).json({ message: 'Post created successfully', post });
-    } catch (error) {
-      console.error('Error creating post:', error);
-      res.status(500).json({ error: 'Internal server error' });
+      if (!text || !title) {
+        return res.status(400).json({ error: "Title and Text fields are required" });
+      }
+
+      const newPost = new Post({
+        postedBy,
+        img,
+        text,
+        category,
+        title,
+        ingredients,
+        recommendations,
+        tips,
+      });
+
+      newPost.save()
+        .then(post => res.status(200).json({ message: 'Post created successfully', post }))
+        .catch(error => {
+          console.error('Error creating post:', error);
+          res.status(500).json({ error: 'Internal server error' });
+        });
     }
   } catch (error) {
     console.error('Error creating post:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+
 
 export const getAllPosts = async (req, res) => {
   try {
