@@ -72,7 +72,6 @@ export const resetPassword = async (req, res) => {
   }
 };
 
-
 export const signUp = async (req, res) => {
   const registerResults = signUpValidator.safeParse(req.body);
   if (!registerResults.success) {
@@ -95,14 +94,18 @@ export const signUp = async (req, res) => {
     const newUser = new User({ name, email, password: hashedPassword });
 
     await newUser.save();
-
-    res.status(200).json({ message: 'User registered successfully', newUser });
     console.log('User registered successfully:', newUser);
+
+    // Generate token and set cookie
+    const accessToken = generateTokenAndSetCookie(newUser._id, res);
+
+    res.status(200).json({ message: 'User registered successfully', accessToken, newUser });
   } catch (error) {
     res.status(500).json({ message: 'Internal server error', error: error.message });
     console.log('INTERNAL SERVER ERROR:', error.message);
   }
 };
+
 
 export const signIn = async (req, res) => {
   const loginResults = signInValidator.safeParse(req.body);
