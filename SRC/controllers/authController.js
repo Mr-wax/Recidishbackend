@@ -4,7 +4,6 @@ import User from '../models/UserModel.js';
 import { sendEmail } from '../utils/mailer.js';
 import  generateTokenAndSetCookie  from '../utils/genTokenAndSetCookies.js';
 import { signInValidator, signUpValidator, passwordValidator, formatZodError } from '../validators/authValidator.js';
-import bcrypt from "bcrypt";
 
 function hashValue(value) {
   return crypto.createHash('sha256').update(value).digest('hex');
